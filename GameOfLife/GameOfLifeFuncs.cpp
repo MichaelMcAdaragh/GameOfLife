@@ -1,13 +1,14 @@
+#include "raylib.h"
 #include "GameOfLife.h"
 
 //Empty grid
-void empty_grid(int* cell_state)
+void empty_grid(int width, int height, int* cell_state)
 {
-	for (int y = 0; y < HEIGHT; y++)
+	for (int y = 0; y < height; y++)
 	{
-		for (int x = 0; x < WIDTH; x++)
+		for (int x = 0; x < width; x++)
 		{
-			cell_state[y * WIDTH + x] = 0;
+			cell_state[y * width + x] = 0;
 		}
 	}
 }
@@ -22,115 +23,95 @@ int randomNumber(int low, int high)
 	return randomNum;
 }
 
-void seed_life(int* cell_state)
+void seed_life(int width, int height, int* cell_state)
 {
-	for (int y = 0; y < HEIGHT; y++)
+	for (int y = 0; y < height; y++)
 	{
-		for (int x = 0; x < WIDTH; x++)
+		for (int x = 0; x < width; x++)
 		{
-			int live_or_dead = randomNumber(0, 1);		//assigns random number to live_or_dead.
-			cell_state[y * WIDTH + x] = live_or_dead;
+			int live_or_dead = randomNumber(0, 1);			//assigns random number to live_or_dead.
+			cell_state[y * width + x] = live_or_dead;
 		}
 	}
 }
-
-//Display grid.
-void display(int* cell_state)
+// Display grid.
+void display(int width, int height, int* cell_state, int generation)
 {
+	BeginDrawing();											// Starts The Drawing Process, Storing the following intructions to be executed at once later.
+	ClearBackground(BLACK);
 
-	string frame_buffer;
-	frame_buffer.reserve(HEIGHT + 2 * (WIDTH * 2 + 2));
-
-	for (int i = 0; i < WIDTH; i++)	//Print ceiling of grid.
+	for (int y = 0; y < height; y++)						// Go top to bottom thru Game of Life matrix cells.
 	{
-		frame_buffer += "--";
-	}
-	frame_buffer += "--\n";
-	for (int y = 0; y < HEIGHT; y++) //Print tetris grid cells.
-	{
-		frame_buffer += "|"; //Print left grid wall.
-		for (int x = 0; x < WIDTH; x++)
+		for (int x = 0; x < width; x++)
 		{
-			switch (cell_state[y * WIDTH + x])
+			if (cell_state[y * width + x] == 1)
 			{
-			case 0:
-				frame_buffer += "  ";
-				break;
-			case 1:
-				frame_buffer += "[]";
-				break;
-			default:
-				return;
+				DrawRectangle(x * CELLSIZE, y * CELLSIZE, CELLSIZE, CELLSIZE, RAYWHITE);
 			}
 		}
-		frame_buffer += "|\n"; //Right grid wall.
 	}
-	//Floor of grid
-	for (int i = 0; i < WIDTH; i++)
-	{
-		frame_buffer += "--";
-	}
-	frame_buffer += "--\n";
-	cout << frame_buffer << flush;
+	char genText[32];
+	DrawText(TextFormat("Generation: %d", generation), 20, 20, 30, GREEN);
+	EndDrawing();											// Ends the Drawing Process, Executing the stored drawing instructions all at once.
 }
 
 //Scan for life.
-int scanning_for_life(int* cell_state, int y, int x)
+int scanning_for_life(int width, int height, int* cell_state, int y, int x)
 {
 	int live_neighbors = 0;
 	//outer if() checks grid bounds, inner if() checks for live neighbors.
-	if (y + 1 < HEIGHT && x - 1 > 0)													//top row left to right.
+	if (y + 1 < height && x - 1 > 0)													//top row left to right.
 	{
-		if (cell_state[(y + 1) * WIDTH + (x - 1)] == 1)
+		if (cell_state[(y + 1) * width + (x - 1)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
-	if (y + 1 < HEIGHT)
+	if (y + 1 < height)
 	{
-		if (cell_state[(y + 1) * WIDTH + (x + 0)] == 1)
+		if (cell_state[(y + 1) * width + (x + 0)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
-	if (y + 1 < HEIGHT && x + 1 < WIDTH)
+	if (y + 1 < height && x + 1 < width)
 	{
-		if (cell_state[(y + 1) * WIDTH + (x + 1)] == 1)
+		if (cell_state[(y + 1) * width + (x + 1)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
 	if (x - 1 > 0)																	//middle row left to right.
 	{
-		if (cell_state[(y + 0) * WIDTH + (x - 1)] == 1)
+		if (cell_state[(y + 0) * width + (x - 1)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
-	if (x + 1 < WIDTH)
+	if (x + 1 < width)
 	{
-		if (cell_state[(y + 0) * WIDTH + (x + 1)] == 1)
+		if (cell_state[(y + 0) * width + (x + 1)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
 	if (y - 1 > 0 && x - 1 > 0)														//bottom row left to right.
 	{
-		if (cell_state[(y - 1) * WIDTH + (x - 1)] == 1)
+		if (cell_state[(y - 1) * width + (x - 1)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
-	if (y - 1 > 0 && x + 1 < WIDTH)
+	if (y - 1 > 0 && x + 1 < width)
 	{
-		if (cell_state[(y - 1) * WIDTH + (x + 1)] == 1)
+		if (cell_state[(y - 1) * width + (x + 1)] == 1)
 		{
 			live_neighbors++;
 		}
 	}
 	if (y - 1 > 0)
 	{
-		if (cell_state[(y - 1) * WIDTH + (x + 0)] == 1)
+		if (cell_state[(y - 1) * width + (x + 0)] == 1)
 		{
 			live_neighbors++;
 		}
@@ -139,48 +120,47 @@ int scanning_for_life(int* cell_state, int y, int x)
 }
 
 //Cast final judgement on the cells.
-void cell_inspector(int* cell_state, int* helper_cell_state, int y, int x, int live_neighbors)
+void cell_inspector(int width, int* cell_state, int* helper_cell_state, int y, int x, int live_neighbors)
 {
 
-	if (cell_state[y * WIDTH + x] == 1)						//Rules for living cells:
+	if (cell_state[y * width + x] == 1)						//Rules for living cells:
 	{
 		if (live_neighbors < 2)								//Underpopulation	
 		{													//-- any live cell with < 2 live neighbors dies.
-			helper_cell_state[y * WIDTH + x] = 0;
+			helper_cell_state[y * width + x] = 0;
 			//cout << "cell " << cell_number << " dies from 'underpopulation.'\n";
 		}
 		if (live_neighbors >= 2 && live_neighbors <= 3)		//Survival			
 		{													//-- any live cell with 2 - 3 live neighbors survives to the next generation.
-			helper_cell_state[y * WIDTH + x] = 1;
+			helper_cell_state[y * width + x] = 1;
 			//cout << "cell " << cell_number << " 'survives.'\n";
 		}
 		if (live_neighbors > 3)								//Overpopulation	
 		{													//-- any live cell with > 3 live neighbors dies.
-			helper_cell_state[y * WIDTH + x] = 0;
+			helper_cell_state[y * width + x] = 0;
 			//cout << "cell " << cell_number << " dies from 'overpopulation.'\n";
 		}
 	}
-	if (cell_state[y * WIDTH + x] == 0)						//Rules for dead cells:
+	if (cell_state[y * width + x] == 0)						//Rules for dead cells:
 	{
 		if (live_neighbors == 3)							//Reproduction	
 		{													//-- any dead cell with exactly 3 neighbors becomes a live cell.
-			helper_cell_state[y * WIDTH + x] = 1;
+			helper_cell_state[y * width + x] = 1;
 			//cout << "cell " << cell_number << " is 'born'.\n";
 		}
 	}
 }
 
-void array_alternator(int* cell_state, int* helper_cell_state)
+void matrix_alternator(int width, int height, int *cell_state, int* helper_cell_state, int generation)
 {
-	empty_grid(helper_cell_state);
-	for (int y = 0; y < HEIGHT; y++)			//top to bottom
+	empty_grid(width, height, helper_cell_state);
+	for (int y = 0; y < height; y++)			//top to bottom
 	{
-		for (int x = 0; x < WIDTH; x++)			//left to right
+		for (int x = 0; x < width; x++)			//left to right
 		{
-			int live_neighbors = scanning_for_life(cell_state, y, x);//"scanning for signs of life"
-			cell_inspector(cell_state, helper_cell_state, y, x, live_neighbors);//"casting final judgement of cells"
-			//cell_number++;
+			int live_neighbors = scanning_for_life(width, height, cell_state, y, x);//"scanning for signs of life"
+			cell_inspector(width, cell_state, helper_cell_state, y, x, live_neighbors);//"casting final judgement of cell's Life or Death"
 		}
 	}
-	display(helper_cell_state);
+	display(width, height, helper_cell_state, generation);
 }
